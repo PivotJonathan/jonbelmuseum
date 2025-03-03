@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Museum of Memories</title>
+    <style>
+        /* General Page Styling */
+        body {
+            margin: 0;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: black;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+
+        /* Login Screen Styling */
+        #login-screen {
+            position: absolute;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: url('woodstock.png') no-repeat center center;
+            background-size: cover;
+        }
+        
+        #password {
+            padding: 10px;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        /* Museum Container */
+        #museum {
+            display: none;
+            width: 100vw;
+            height: 100vh;
+            background-color: black;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Room Styling */
+        .room {
+            width: 100vw;
+            height: 100vh;
+            position: absolute;
+            top: 0;
+            left: 0;
+            background-size: cover;
+            background-position: center;
+            display: none;
+        }
+
+        /* Backgrounds for Rooms */
+        #room1 { background: url('NEWBACKGROUND.jpg') no-repeat center center; background-size: cover; display: block; }
+        #room2 { background: url('backgroundtuah.png') no-repeat center center; background-size: cover; }
+        #room3 { background: url('FINISHEDPT3.png') no-repeat center center; background-size: cover; }
+
+        /* Character Styling */
+        #character {
+            width: 48px;
+            height: 64px;
+            position: absolute;
+            top: 70%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: url('character.png') no-repeat center;
+            background-size: contain;
+        }
+
+        /* NPC Styling */
+        .npc {
+            width: 144px;
+            height: 192px;
+            position: absolute;
+            top: 80%;
+            left: 75%;
+            transform: translate(-50%, -50%);
+            background: url('npc.png') no-repeat center;
+            background-size: contain;
+        }
+
+        #dialogue-box {
+            display: none;
+            position: absolute;
+            bottom: 10%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="login-screen">
+        <input type="password" id="password" placeholder="Enter Password">
+        <button id="enter-btn">Enter</button>
+    </div>
+    
+    <!-- Museum with Rooms and Character -->
+    <div id="museum">
+        <div id="room1" class="room">
+            <div class="npc" id="npc1"></div>
+        </div>
+        <div id="room2" class="room">
+            <div class="npc" id="npc2"></div>
+        </div>
+        <div id="room3" class="room">
+            <div class="npc" id="npc3"></div>
+        </div>
+        <div id="character"></div>
+        <div id="dialogue-box"></div>
+    </div>
+    
+    <script>
+        // Password Authentication
+        const correctPassword = "museum123";
+        const loginScreen = document.getElementById('login-screen');
+        const museum = document.getElementById('museum');
+        const enterButton = document.getElementById('enter-btn');
+        const character = document.getElementById('character');
+        const rooms = [document.getElementById('room1'), document.getElementById('room2'), document.getElementById('room3')];
+        const dialogueBox = document.getElementById('dialogue-box');
+        const npcs = [document.getElementById('npc1'), document.getElementById('npc2'), document.getElementById('npc3')];
+        let posX = window.innerWidth / 2;
+        let posY = window.innerHeight * 0.7;
+        let currentRoom = 0;
+        let keysPressed = {};
+
+        function checkPassword() {
+            const enteredPassword = document.getElementById('password').value;
+            if (enteredPassword === correctPassword) {
+                loginScreen.style.display = 'none';
+                museum.style.display = 'block';
+                requestAnimationFrame(moveCharacter);
+            } else {
+                alert('Incorrect password!');
+            }
+        }
+        
+        enterButton.addEventListener('click', checkPassword);
+        document.getElementById('password').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                checkPassword();
+            }
+        });
+
+        document.addEventListener('keydown', (event) => {
+            keysPressed[event.key] = true;
+        });
+
+        document.addEventListener('keyup', (event) => {
+            delete keysPressed[event.key];
+        });
+
+        function moveCharacter() {
+            const step = 5;
+            
+            if (keysPressed['w'] && posY > 0) posY -= step;
+            if (keysPressed['s'] && posY < window.innerHeight - 64) posY += step;
+            if (keysPressed['a'] && posX > 0) posX -= step;
+            if (keysPressed['d'] && posX < window.innerWidth - 48) posX += step;
+            
+            let nearNPC = false;
+            npcs.forEach((npc, index) => {
+                if (rooms[currentRoom].contains(npc) && Math.abs(posX - npc.offsetLeft) < 50 && Math.abs(posY - npc.offsetTop) < 50) {
+                    dialogueBox.innerText = index === 0 
+                        ? "Welcome to Jonbel Museum! I've been awaiting your visit, feel free to look around and I'll be here if you have any questions :)" 
+                        : index === 1 
+                        ? "Here we have a collection of Mabel and Jonathan in front of some cool cars! Pretty cool right :p" 
+                        : "Thanks for visiting the museum! As a token of our appreciation we have awarded you with two tickets to see Modern Color!";
+                    dialogueBox.style.display = 'block';
+                    nearNPC = true;
+                }
+            });
+            if (!nearNPC) dialogueBox.style.display = 'none';
+
+            // Room transition logic
+            if (posX >= window.innerWidth - 48 && currentRoom < rooms.length - 1) {
+                rooms[currentRoom].style.display = 'none';
+                currentRoom++;
+                rooms[currentRoom].style.display = 'block';
+                posX = 50;
+            }
+            if (posX <= 0 && currentRoom > 0) {
+                rooms[currentRoom].style.display = 'none';
+                currentRoom--;
+                rooms[currentRoom].style.display = 'block';
+                posX = window.innerWidth - 50;
+            }
+
+            character.style.top = posY + 'px';
+            character.style.left = posX + 'px';
+            
+            requestAnimationFrame(moveCharacter);
+        }
+    </script>
+</body>
+</html>
